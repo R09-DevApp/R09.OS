@@ -3,785 +3,282 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="r09-version" content="0.1.0-github-demo">
+  <meta name="r09-version" content="0.1.0">
   <title>R09 — Souveraineté Locale, Puissance Mutualisée</title>
-
-  <!--
-    ==========================================================================
-    R09.OS v0.1 — ARCHITECTURE MONOLITHIQUE AUTARCIQUE (1 FILE = 1 TRUTH)
-    - Zéro dépendance externe côté noyau, zéro serveur backend.
-    - Loi du Quantum : chaque module <template data-type="logic"> < 1024 car.
-    - Système 1 (FractalNode + Primitives Jev) en local sur tous terminaux.
-    - Système 2 (WebGPU LLM + WebRTC P2P) mutualisé entre pairs.
-    ==========================================================================
-  -->
-
   <style data-r09-base="true">
     :root {
-      --r09-bg: #070a12;
-      --r09-fg: #f1f5f9;
+      --r09-bg: #080b14;
+      --r09-fg: #e2e8f0;
       --r09-muted: #94a3b8;
-      --r09-win-bg: rgba(15, 23, 42, 0.72);
-      --r09-win-border: rgba(255, 255, 255, 0.14);
+      --r09-win-bg: rgba(17, 24, 39, 0.72);
+      --r09-win-border: rgba(255, 255, 255, 0.15);
       --r09-blur: 16px;
       --r09-accent: #6366f1;
-      --r09-accent2: #38bdf8;
       --r09-radius: 18px;
       --r09-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
     }
-
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
     body {
-      margin: 0;
-      height: 100dvh;
-      overflow: hidden;
-      background: var(--r09-bg);
-      color: var(--r09-fg);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      margin: 0; height: 100dvh; overflow: hidden;
+      background: var(--r09-bg); color: var(--r09-fg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
       transition: background 0.45s ease, color 0.35s ease;
       user-select: none;
     }
-
-    /* Halos ambiants révélant instantanément le glassmorphisme et les dégradés */
     body::before, body::after {
-      content: "";
-      position: fixed;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 0;
-      filter: blur(85px);
-      opacity: 0.58;
-      transition: background 0.6s ease, transform 0.6s ease;
+      content: ""; position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      filter: blur(85px); opacity: 0.55; transition: all 0.6s ease;
     }
-    body::before {
-      width: 46vmax; height: 46vmax;
-      top: -12vmax; left: -10vmax;
-      background: var(--r09-accent);
-    }
-    body::after {
-      width: 44vmax; height: 44vmax;
-      bottom: -14vmax; right: -8vmax;
-      background: var(--r09-accent2);
-    }
-
+    body::before { width: 46vmax; height: 46vmax; top: -12vmax; left: -10vmax; background: var(--r09-accent); }
+    body::after { width: 42vmax; height: 42vmax; bottom: -14vmax; right: -8vmax; background: color-mix(in srgb, var(--r09-accent) 60%, #38bdf8); }
     #blueprint-database { display: none; }
-
-    /* Fenêtres flottantes R09 */
     .r09-window {
-      position: absolute;
-      width: min(540px, 92vw);
-      max-height: 68dvh;
-      left: calc(50vw - min(270px, 46vw));
-      top: 9dvh;
+      position: absolute; width: min(500px, 92vw); max-height: 66dvh;
+      left: calc(50vw - min(250px, 46vw)); top: 9dvh;
       background: var(--r09-win-bg);
-      backdrop-filter: blur(var(--r09-blur));
-      -webkit-backdrop-filter: blur(var(--r09-blur));
-      border: 1px solid var(--r09-win-border);
-      border-radius: var(--r09-radius);
-      box-shadow: var(--r09-shadow);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transition: background 0.4s ease, border-color 0.3s ease, box-shadow 0.4s ease, border-radius 0.3s ease;
+      backdrop-filter: blur(var(--r09-blur)); -webkit-backdrop-filter: blur(var(--r09-blur));
+      border: 1px solid var(--r09-win-border); border-radius: var(--r09-radius);
+      box-shadow: var(--r09-shadow); display: flex; flex-direction: column;
+      overflow: hidden; transition: background 0.4s ease, border-color 0.3s ease, box-shadow 0.4s ease, border-radius 0.3s ease;
     }
-
     .w-head {
-      height: 38px;
-      padding: 0 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid var(--r09-win-border);
+      height: 38px; padding: 0 14px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--r09-win-border); cursor: grab; touch-action: none;
       background: rgba(255, 255, 255, 0.04);
-      cursor: grab;
-      touch-action: none;
-      flex-shrink: 0;
     }
-    .w-close {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: #f43f5e;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .w-title {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      opacity: 0.9;
-    }
-    .w-body {
-      padding: 14px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      font-size: 13px;
-      line-height: 1.5;
-      user-select: text;
-    }
-
-    /* Bureau, barre de télémétrie et Dock */
+    .w-close { width: 12px; height: 12px; border-radius: 50%; background: #f43f5e; cursor: pointer; flex-shrink: 0; }
+    .w-title { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; opacity: 0.9; }
+    .w-body { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.45; }
     .r09-desktop {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 9000;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
+      position: fixed; inset: 0; pointer-events: none; z-index: 9000;
+      display: flex; flex-direction: column; justify-content: space-between; align-items: center;
       padding: 12px 10px 16px;
     }
-
-    .top-stack {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      max-width: 96vw;
+    .top-bar {
+      pointer-events: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+      padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 600;
+      background: var(--r09-win-bg); border: 1px solid var(--r09-win-border);
+      backdrop-filter: blur(var(--r09-blur)); -webkit-backdrop-filter: blur(var(--r09-blur));
     }
-
-    .pill-bar {
-      pointer-events: auto;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      align-items: center;
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--r09-win-bg);
-      border: 1px solid var(--r09-win-border);
-      backdrop-filter: blur(var(--r09-blur));
-      -webkit-backdrop-filter: blur(var(--r09-blur));
-    }
-
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #64748b;
-      display: inline-block;
-      margin-right: 4px;
-    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #64748b; display: inline-block; }
     .dot.ok { background: #10b981; box-shadow: 0 0 8px #10b981; }
     .dot.busy { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
-    .dot.err { background: #f43f5e; box-shadow: 0 0 8px #f43f5e; }
-
-    .bottom-stack {
-      pointer-events: auto;
-      width: min(560px, 94vw);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: center;
-    }
-
+    .bottom-stack { pointer-events: auto; width: min(540px, 94vw); display: flex; flex-direction: column; gap: 8px; align-items: center; }
     .prompt-box {
-      width: 100%;
-      display: flex;
-      gap: 8px;
-      padding: 6px 8px 6px 14px;
-      background: var(--r09-win-bg);
-      border: 1px solid var(--r09-win-border);
-      border-radius: 99px;
-      box-shadow: var(--r09-shadow);
-      backdrop-filter: blur(var(--r09-blur));
-      -webkit-backdrop-filter: blur(var(--r09-blur));
+      width: 100%; display: flex; gap: 8px; padding: 6px 8px 6px 14px;
+      background: var(--r09-win-bg); border: 1px solid var(--r09-win-border);
+      border-radius: 99px; box-shadow: var(--r09-shadow);
+      backdrop-filter: blur(var(--r09-blur)); -webkit-backdrop-filter: blur(var(--r09-blur));
     }
     .prompt-box input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--r09-fg);
-      font-size: 16px; /* >= 16px évite le zoom automatique Safari iOS */
-      min-width: 0;
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--r09-fg); font-size: 16px; min-width: 0;
     }
     .prompt-box input::placeholder { color: var(--r09-muted); font-size: 13px; }
-
     .dock {
-      display: flex;
-      gap: 8px;
-      padding: 7px 12px;
-      border-radius: 20px;
-      background: var(--r09-win-bg);
-      border: 1px solid var(--r09-win-border);
-      backdrop-filter: blur(var(--r09-blur));
-      -webkit-backdrop-filter: blur(var(--r09-blur));
+      display: flex; gap: 8px; padding: 7px 12px; border-radius: 20px;
+      background: var(--r09-win-bg); border: 1px solid var(--r09-win-border);
+      backdrop-filter: blur(var(--r09-blur)); -webkit-backdrop-filter: blur(var(--r09-blur));
     }
-
     .c-btn {
-      background: var(--r09-accent);
-      color: #ffffff;
-      border: none;
-      border-radius: 99px;
-      padding: 8px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
+      background: var(--r09-accent); color: #fff; border: none; border-radius: 99px;
+      padding: 8px 13px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
       transition: transform 0.12s ease, opacity 0.2s ease;
     }
     .c-btn:active { transform: scale(0.96); }
-    .c-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .c-btn.sec {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--r09-fg);
-      border: 1px solid var(--r09-win-border);
+    .c-btn.sec { background: rgba(255, 255, 255, 0.1); color: var(--r09-fg); border: 1px solid var(--r09-win-border); }
+    .c-inp, .c-txt {
+      width: 100%; background: rgba(0, 0, 0, 0.22); color: var(--r09-fg);
+      border: 1px solid var(--r09-win-border); border-radius: 10px; padding: 8px 10px;
+      font-family: monospace; font-size: 12px; outline: none;
     }
-
-    .c-inp, .c-txt, .c-sel {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.22);
-      color: var(--r09-fg);
-      border: 1px solid var(--r09-win-border);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-      outline: none;
-    }
-    .c-txt { height: 64px; resize: none; }
-    .qr-box {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      padding: 12px; background: #fff; color: #0f172a; border-radius: 14px;
-      margin-top: 8px; text-align: center;
-    }
-    .qr-box img { width: 170px; height: 170px; display: block; border-radius: 8px; }
-
+    .c-txt { height: 60px; resize: none; }
     .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .card {
-      padding: 11px 12px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--r09-win-border);
-    }
-
-    .prog-bg {
-      width: 100%; height: 6px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 99px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-    .prog-fill {
-      height: 100%; width: 0%;
-      background: var(--r09-accent);
-      transition: width 0.2s ease;
-    }
-
-    .chat-box {
-      max-height: 220px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px;
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--r09-win-border);
-    }
-    .msg { padding: 8px 10px; border-radius: 10px; font-size: 12.5px; word-break: break-word; }
-    .msg.u { background: rgba(99, 102, 241, 0.25); align-self: flex-end; max-width: 88%; }
-    .msg.ai { background: rgba(255, 255, 255, 0.07); align-self: flex-start; max-width: 94%; }
-    .diag-log {
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      max-height: 95px;
-      overflow-y: auto;
-      color: var(--r09-muted);
-      white-space: pre-wrap;
-    }
+    .card { padding: 11px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--r09-win-border); }
+    .muted { color: var(--r09-muted); font-size: 11px; }
   </style>
 </head>
 <body>
   <div id="blueprint-database">
 
-    <!-- 1. BUS D'ÉVÉNEMENTS O(1) (< 350 car.) -->
     <template id="core_ether" data-type="logic">
       <script>
-        window.R09_Core = {
-          Ether: (() => {
-            const t = new Map();
-            return {
-              on: (e, cb) => { if (!t.has(e)) t.set(e, new Set()); t.get(e).add(cb); },
-              off: (e, cb) => t.get(e)?.delete(cb),
-              emit: (e, d) => t.get(e)?.forEach(cb => { try { cb(d); } catch (err) { console.error(e, err); } })
-            };
-          })()
-        };
+        window.R09_Core={Ether:(()=>{const t=new Map();return{on:(e,c)=>{if(!t.has(e))t.set(e,new Set());t.get(e).add(c);},off:(e,c)=>t.get(e)?.delete(c),emit:(e,d)=>t.get(e)?.forEach(c=>{try{c(d);}catch(x){console.error(e,x);}})};})()};
       </script>
     </template>
 
-    <!-- 2. MÉMOIRE VIVE RÉACTIVE (< 300 car.) -->
     <template id="core_ram" data-type="logic">
       <script>
-        window.R09_Core.createRAM = (ether) => {
-          const m = new Map();
-          return {
-            read: id => m.get(id),
-            write: (id, d) => { m.set(id, d); ether.emit('ram›write', { id }); },
-            list: () => Array.from(m.keys())
-          };
-        };
+        window.R09_Core.createRAM=e=>{const m=new Map();return{read:i=>m.get(i),write:(i,d)=>{m.set(i,d);e.emit('ram›write',{id:i});},list:()=>[...m.keys()]};};
       </script>
     </template>
 
-    <!-- 3. ÉTAT COURANT DES VARIABLES CSS (DATA) -->
     <template id="sys_theme_dict" data-type="data">{
-  "--r09-bg": "#070a12",
-  "--r09-fg": "#f1f5f9",
+  "--r09-bg": "#080b14",
+  "--r09-fg": "#e2e8f0",
   "--r09-muted": "#94a3b8",
-  "--r09-win-bg": "rgba(15, 23, 42, 0.72)",
-  "--r09-win-border": "rgba(255, 255, 255, 0.14)",
+  "--r09-win-bg": "rgba(17, 24, 39, 0.72)",
+  "--r09-win-border": "rgba(255, 255, 255, 0.15)",
   "--r09-blur": "16px",
   "--r09-accent": "#6366f1",
-  "--r09-accent2": "#38bdf8",
   "--r09-radius": "18px",
   "--r09-shadow": "0 24px 60px rgba(0, 0, 0, 0.55)"
 }</template>
 
-    <!-- 4. MOTEUR DE THÈME & PILE UNDO O(1) (< 650 car.) -->
+    <template id="sys_ai_prompt" data-type="data">Moteur thème R09.OS. Réponds UNIQUEMENT en JSON valide sans texte ni markdown avec tout ou partie de: "--r09-bg","--r09-fg","--r09-muted","--r09-win-bg","--r09-win-border","--r09-blur","--r09-accent","--r09-radius","--r09-shadow". Bleu clair aquarelle: bg #e0f2fe, fg #0f172a, win-bg rgba(255,255,255,0.68), accent #0284c7. Glassmorphisme: win-bg rgba(255,255,255,0.14), blur 28px, border rgba(255,255,255,0.35).</template>
+
+    <template id="sys_fractal_dict" data-type="data">{"UNDO":{"reviens":1,"precedent":1,"annule":1,"retour":0.9,"undo":1},"THEME":{"theme":0.9,"aquarelle":1,"glassmorphisme":1,"bleu":0.8,"clair":0.7,"flou":0.9,"interface":0.7,"applique":0.7,"mets":0.7,"change":0.8,"sombre":0.8,"couleur":0.8},"COMMIT":{"valide":1,"synchronise":1,"partout":0.9,"fixe":0.9,"confirme":0.9,"commit":1}}</template>
+
+    <template id="core_node" data-type="logic">
+      <script>
+        (()=>{const m=/iPhone|iPad|Android/i.test(navigator.userAgent);window.R09_NODE={id:(m?'IOS-':'MAC-')+Math.random().toString(16).slice(2,6).toUpperCase(),dev:m?'iPhone/Mobile':'Mac/Desktop',local:0,remote:0};})();
+      </script>
+    </template>
+
     <template id="logic_theme" data-type="logic">
       <script>
-        (() => {
-          const hist = [], r = document.documentElement.style;
-          const getCur = () => JSON.parse(ram.read('sys_theme_dict').content);
-          const paint = obj => {
-            for (const [k, v] of Object.entries(obj)) r.setProperty(k, v);
-            ram.write('sys_theme_dict', { id: 'sys_theme_dict', type: 'data', content: JSON.stringify(obj, null, 2) });
-          };
-          ether.on('theme›patch', ({ patch, save = true }) => {
-            const cur = getCur();
-            if (save) hist.push({ ...cur });
-            paint({ ...cur, ...patch });
-          });
-          ether.on('theme›undo', () => {
-            if (hist.length) paint(hist.pop());
-            ether.emit('ui›toast', '↩ Thème précédent restauré (0 ms)');
-          });
-          paint(getCur());
-        })();
+        (()=>{const h=[],r=document.documentElement.style,cur=()=>JSON.parse(ram.read('sys_theme_dict').content),paint=o=>{for(const[k,v]of Object.entries(o))r.setProperty(k,v);ram.write('sys_theme_dict',{id:'sys_theme_dict',type:'data',content:JSON.stringify(o,null,2)});};ether.on('theme›patch',({patch,save=true})=>{const c=cur();if(save)h.push({...c});paint({...c,...patch});});ether.on('theme›undo',()=>{if(h.length)paint(h.pop());ether.emit('ui›toast','↩ Thème précédent restauré');});paint(cur());})();
       </script>
     </template>
 
-    <!-- 5. GESTIONNAIRE DE FENÊTRES FLOTTANTES (< 850 car.) -->
     <template id="core_window" data-type="logic">
       <script>
-        (() => {
-          let z = 100, d = null, ox = 0, oy = 0;
-          window.addEventListener('pointermove', e => {
-            if (!d) return;
-            d.style.left = (e.clientX - ox) + 'px';
-            d.style.top = (e.clientY - oy) + 'px';
-          });
-          window.addEventListener('pointerup', () => { d = null; });
-          ether.on('win›close', id => document.getElementById('w-' + id)?.remove());
-          ether.on('win›open', id => {
-            const ex = document.getElementById('w-' + id);
-            if (ex) { ex.style.zIndex = ++z; return; }
-            const mod = ram.read(id); if (!mod) return;
-            const w = document.createElement('div');
-            w.id = 'w-' + id; w.className = 'r09-window'; w.style.zIndex = ++z;
-            w.innerHTML = `<div class="w-head"><div class="w-close"></div><div class="w-title">${mod.name || id}</div></div><div class="w-body">${mod.content}</div>`;
-            w.querySelector('.w-close').onclick = () => ether.emit('win›close', id);
-            w.querySelector('.w-head').onpointerdown = e => {
-              if (e.target.classList.contains('w-close')) return;
-              d = w; ox = e.clientX - w.offsetLeft; oy = e.clientY - w.offsetTop; w.style.zIndex = ++z;
-            };
-            document.body.appendChild(w);
-            ether.emit('app›mount›' + id, w);
-          });
-        })();
+        (()=>{let z=100,d=null,ox=0,oy=0;window.addEventListener('pointermove',e=>{if(!d)return;d.style.left=(e.clientX-ox)+'px';d.style.top=(e.clientY-oy)+'px';});window.addEventListener('pointerup',()=>d=null);ether.on('win›close',i=>document.getElementById('w-'+i)?.remove());ether.on('win›open',i=>{const x=document.getElementById('w-'+i);if(x){x.style.zIndex=++z;return;}const m=ram.read(i);if(!m)return;const w=document.createElement('div');w.id='w-'+i;w.className='r09-window';w.style.zIndex=++z;w.innerHTML=`<div class="w-head"><div class="w-close"></div><div class="w-title">${m.name||i}</div></div><div class="w-body">${m.content}</div>`;w.querySelector('.w-close').onclick=()=>ether.emit('win›close',i);w.querySelector('.w-head').onpointerdown=e=>{if(e.target.classList.contains('w-close'))return;d=w;ox=e.clientX-w.offsetLeft;oy=e.clientY-w.offsetTop;w.style.zIndex=++z;};document.body.appendChild(w);ether.emit('app›mount›'+i,w);});})();
       </script>
     </template>
 
-    <!-- 6. GABARIT DU BUREAU & BARRE DE TÉLÉMÉTRIE -->
     <template id="sys_desktop" data-type="layout">
       <div class="r09-desktop">
-        <div class="top-stack">
-          <div class="pill-bar">
-            <span>R09.OS v0.1</span>
-            <span>•</span>
-            <span><i id="dot-p2p" class="dot"></i><span id="lbl-p2p">P2P Hors-ligne</span></span>
-            <span>•</span>
-            <span><i id="dot-ai" class="dot"></i><span id="lbl-ai">GPU Inactif</span></span>
-          </div>
-          <div id="r09-trace" class="pill-bar" style="font-weight:400;opacity:0.85;">FractalNode + JEV : En attente</div>
-          <div id="r09-toast" class="pill-bar" style="opacity:0;transition:opacity .25s;">Prêt</div>
+        <div class="top-bar">
+          <span>R09.OS</span>
+          <span>•</span>
+          <span><i id="dot-p2p" class="dot"></i> <span id="lbl-p2p">P2P Off</span></span>
+          <span>•</span>
+          <span><i id="dot-ai" class="dot"></i> <span id="lbl-ai">IA Off</span></span>
+          <span>•</span>
+          <span id="lbl-fractal" class="muted">FractalNode Prêt</span>
         </div>
+        <div id="r09-toast" class="top-bar" style="opacity:0;transition:opacity .25s">Prêt</div>
         <div class="bottom-stack">
           <div class="prompt-box">
-            <input id="r09-prompt" type="text" placeholder="Ex: Thème bleu clair aquarelle, ou pose ta question..." autocomplete="off">
-            <button id="r09-send" class="c-btn">Envoyer</button>
+            <input id="r09-prompt" type="text" placeholder="Ex: Thème bleu clair aquarelle, ou Valide le thème..." autocomplete="off">
+            <button id="r09-send" class="c-btn">Exécuter</button>
           </div>
           <div class="dock" id="sys-dock"></div>
         </div>
       </div>
     </template>
 
-    <!-- 7. CONTRÔLEUR DU BUREAU & DOCK (< 850 car.) -->
     <template id="logic_desktop" data-type="logic">
       <script>
-        (() => {
-          const m = document.createElement('div');
-          m.innerHTML = ram.read('sys_desktop').content;
-          document.body.appendChild(m.firstElementChild);
-          const dock = document.getElementById('sys-dock');
-          ram.list().filter(id => ram.read(id).type === 'app').forEach(id => {
-            const b = document.createElement('button');
-            b.className = 'c-btn sec'; b.textContent = ram.read(id).name;
-            b.onclick = () => ether.emit('win›open', id);
-            dock.appendChild(b);
-          });
-          const inp = document.getElementById('r09-prompt');
-          const go = () => { if (inp.value.trim()) { ether.emit('cmd›exec', inp.value.trim()); inp.value = ''; } };
-          document.getElementById('r09-send').onclick = go;
-          inp.onkeydown = e => { if (e.key === 'Enter') go(); };
-          let tm;
-          ether.on('ui›toast', msg => {
-            const t = document.getElementById('r09-toast');
-            t.textContent = msg; t.style.opacity = '1';
-            clearTimeout(tm); tm = setTimeout(() => t.style.opacity = '0', 2800);
-          });
-          ether.on('ui›trace', msg => { document.getElementById('r09-trace').textContent = msg; });
-        })();
+        (()=>{const m=document.createElement('div');m.innerHTML=ram.read('sys_desktop').content;document.body.appendChild(m.firstElementChild);const dk=document.getElementById('sys-dock');ram.list().filter(i=>ram.read(i).type==='app').forEach(i=>{const b=document.createElement('button');b.className='c-btn sec';b.textContent=ram.read(i).name;b.onclick=()=>ether.emit('win›open',i);dk.appendChild(b);});const inp=document.getElementById('r09-prompt'),go=()=>{if(inp.value.trim()){ether.emit('cmd›exec',inp.value.trim());inp.value='';}};document.getElementById('r09-send').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go();};let tm;ether.on('ui›toast',g=>{const t=document.getElementById('r09-toast');t.textContent=g;t.style.opacity='1';clearTimeout(tm);tm=setTimeout(()=>t.style.opacity='0',2600);});})();
       </script>
     </template>
 
-    <!-- 8. SYSTÈME 1 : FRACTALNODE + PRIMITIVES TYPÉES JEV (< 980 car.) -->
-    <template id="logic_fractal_jev" data-type="logic">
+    <template id="core_fractal" data-type="logic">
       <script>
-        (() => {
-          const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const noul = (txt, dict) => {
-            const w = norm(txt).match(/[a-z0-9]{3,}/g) || [];
-            let sc = 0;
-            for (const [k, v] of Object.entries(dict)) if (w.some(x => x.includes(k))) sc += v;
-            return Math.min(1, sc);
-          };
-          const choice = txt => {
-            const opts = {
-              UNDO: noul(txt, { revien: 0.9, preced: 0.9, annul: 0.9, undo: 0.9, retour: 0.8 }),
-              COMMIT: noul(txt, { valid: 0.95, partout: 0.85, synchronis: 0.9, fix: 0.8, commit: 0.95 }),
-              THEME_UI: noul(txt, { theme: 0.9, interfac: 0.8, couleur: 0.85, aquarell: 0.95, glassmorph: 0.95, flou: 0.85, fenetr: 0.75, sombr: 0.8, clair: 0.8, pastel: 0.9 })
-            };
-            const best = Object.entries(opts).sort((a, b) => b[1] - a[1])[0];
-            return best[1] >= 0.75 ? { act: best[0], conf: best[1], undoFirst: opts.UNDO >= 0.75 } : { act: 'OPEN_CHAT', conf: 1 - best[1], undoFirst: false };
-          };
-          ether.on('cmd›exec', raw => {
-            const t0 = performance.now(), d = choice(raw), dt = (performance.now() - t0).toFixed(2);
-            ether.emit('ui›trace', `FractalNode/JEV → ${d.act} (${Math.round(d.conf * 100)}% • ${dt}ms)`);
-            ether.emit('diag›log', `[JEV] "${raw}" => ${d.act} (${d.conf.toFixed(2)})`);
-            if (d.act === 'COMMIT') {
-              const cur = JSON.parse(ram.read('sys_theme_dict').content);
-              ether.emit('p2p›send', { type: 'COMMIT', patch: cur });
-              return ether.emit('ui›toast', '✓ Thème validé & synchronisé sur le réseau');
-            }
-            if (d.undoFirst) ether.emit('theme›undo');
-            if (d.act === 'UNDO') return;
-            ether.emit('ai›ask', { mode: d.act === 'THEME_UI' ? 'THEME' : 'CHAT', text: raw });
-          });
-        })();
+        class FractalNode{constructor(n){this.name=n;this.children=[];this.weights=null;this.rules=[];}setAsLeaf(w){this.weights=w;return this;}addChild(n){this.children.push(n);return this;}addSynergyRule(a,c){this.rules.push({a,c});return this;}process(t){const nm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(this.weights){const ws=nm(t).match(/[a-z0-9]+/g)||[];let sc=0;for(const[k,v]of Object.entries(this.weights)){const nk=nm(k),i=ws.findIndex(w=>w===nk||(w.length>3&&nk.length>3&&(w.includes(nk)||nk.includes(w))));if(i>-1){const neg=ws.slice(Math.max(0,i-3),i).some(x=>['pas','non','jamais','sans'].includes(x));sc+=neg?v*.1:v;}}return{intent:this.name,confidence:sc/(sc+.4)};}const act={};let b={intent:'UNKNOWN',confidence:0};for(const c of this.children){const r=c.process(t);act[c.name]=r.confidence;if(r.confidence>b.confidence)b=r;}for(const r of this.rules){let s=0,n=0,ok=1;for(const[k,th]of Object.entries(r.c)){if((act[k]||0)<th){ok=0;break;}s+=act[k];n++;}if(ok&&s/n>b.confidence)b={intent:r.a,confidence:s/n};}return b;}}window.FractalNode=FractalNode;
       </script>
     </template>
 
-    <!-- 9. PONT P2P DIRECT PAR QR CODE / CODE SALLE (< 995 car.) -->
+    <template id="logic_router" data-type="logic">
+      <script>
+        (()=>{const cfg=JSON.parse(ram.read('sys_fractal_dict').content),br=new FractalNode('R09');for(const[k,w]of Object.entries(cfg))br.addChild(new FractalNode(k).setAsLeaf(w));br.addSynergyRule('UNDO_THEME',{UNDO:.5,THEME:.5}).addSynergyRule('DO_COMMIT',{COMMIT:.5}).addSynergyRule('DO_UNDO',{UNDO:.5});ether.on('cmd›exec',txt=>{const d=br.process(txt),isTh=(d.intent==='THEME'||d.intent==='UNDO_THEME')&&d.confidence>=.62,me=R09_NODE.id;if(d.intent==='DO_COMMIT'&&d.confidence>=.62){R09_NODE.local++;ether.emit('p2p›send',{type:'COMMIT',patch:JSON.parse(ram.read('sys_theme_dict').content),from:me});return ether.emit('ui›toast',`⚡ LOCAL [${me}]`);}if(d.intent==='DO_UNDO'&&d.confidence>=.62){R09_NODE.local++;return ether.emit('theme›undo');}if(d.intent==='UNDO_THEME'){R09_NODE.local++;ether.emit('theme›undo');}document.getElementById('lbl-fractal').textContent=`${isTh?d.intent:'CHAT'} → ${window.R09_PEER?.id||me}`;ether.emit('ai›ask',{text:txt,mode:isTh?'THEME':'CHAT'});});})();
+      </script>
+    </template>
+
+    <template id="core_sig" data-type="logic">
+      <script>
+        window.R09_SIG=(room,cb)=>{const te=new TextEncoder(),td=new TextDecoder(),tp='r09/v1/'+room,el=n=>{const a=[];do{let b=n%128;n>>=7;if(n)b|=128;a.push(b);}while(n);return a;},sb=s=>{const b=te.encode(s);return[b.length>>8,b.length&255,...b];},ws=new WebSocket('wss://broker.emqx.io:8084/mqtt','mqtt');ws.binaryType='arraybuffer';ws.onopen=()=>{const c=[0,4,77,81,84,84,4,2,0,60,...sb('r09'+Math.random().toString(36).slice(2,7))],s=[0,1,...sb(tp),0];ws.send(new Uint8Array([0x10,...el(c.length),...c]));ws.send(new Uint8Array([0x82,...el(s.length),...s]));cb({sys:'ready'});};ws.onmessage=e=>{const u=new Uint8Array(e.data);if((u[0]&240)===48){let i=1;while(u[i++]&128);i+=2+((u[i]<<8)|u[i+1]);try{cb(JSON.parse(td.decode(u.subarray(i))));}catch(_){}}};return{send:o=>{if(ws.readyState===1){const p=[...sb(tp),...te.encode(JSON.stringify(o))];ws.send(new Uint8Array([0x30,...el(p.length),...p]));}},close:()=>ws.close()};};
+      </script>
+    </template>
+
+    <template id="core_webrtc" data-type="logic">
+      <script>
+        (()=>{let pc,dc,sg;const me=R09_NODE.id,w=()=>new Promise(r=>{if(pc.iceGatheringState==='complete')return r();const t=setTimeout(r,1200);pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);r();}};});const init=c=>{sg?.close();pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});const b=x=>{dc=x;dc.onopen=()=>{sg?.close();ether.emit('p2p›state',1);};dc.onclose=()=>ether.emit('p2p›state',0);dc.onmessage=e=>ether.emit('p2p›msg',JSON.parse(e.data));};c?b(pc.createDataChannel('r09')):pc.ondatachannel=e=>b(e.channel);};window.R09_P2P={host:r=>{init(1);sg=R09_SIG(r,async m=>{if(m.f!==me&&m.j){await pc.setLocalDescription();await w();sg.send({s:pc.localDescription,f:me});}if(m.s?.type==='answer')await pc.setRemoteDescription(m.s);});},join:r=>{init(0);sg=R09_SIG(r,async m=>{if(m.sys)sg.send({j:1,f:me});if(m.f!==me&&m.s?.type==='offer'){await pc.setRemoteDescription(m.s);await pc.setLocalDescription();await w();sg.send({s:pc.localDescription,f:me});}});},send:o=>dc?.readyState==='open'&&dc.send(JSON.stringify(o)),isOpen:()=>dc?.readyState==='open'};})();
+      </script>
+    </template>
+
     <template id="logic_p2p" data-type="logic">
       <script>
-        (() => {
-          let peer = null, conn = null;
-          const setSt = (cls, txt) => {
-            document.getElementById('dot-p2p').className = 'dot ' + cls;
-            document.getElementById('lbl-p2p').textContent = txt;
-          };
-          const bind = c => {
-            conn = c;
-            conn.on('open', () => { setSt('ok', 'P2P Connecté'); ether.emit('ui›toast', '🔗 Mac & iPhone connectés !'); ether.emit('diag›log', '[P2P] Tunnel direct ouvert'); });
-            conn.on('close', () => setSt('err', 'P2P Fermé'));
-            conn.on('data', d => ether.emit('p2p›msg', d));
-          };
-          const loadPeer = () => window.Peer ? Promise.resolve() : new Promise((res, rej) => {
-            const s = document.createElement('script');
-            s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-            s.onload = res; s.onerror = rej; document.head.appendChild(s);
-          });
-          window.R09_P2P = {
-            host: async () => {
-              await loadPeer();
-              const pin = String(Math.floor(1000 + Math.random() * 9000));
-              peer = new Peer('r09-' + pin);
-              peer.on('connection', bind);
-              return new Promise(r => peer.on('open', () => r(pin)));
-            },
-            join: async pin => {
-              await loadPeer();
-              peer = new Peer();
-              peer.on('open', () => bind(peer.connect('r09-' + pin.trim(), { reliable: true })));
-            },
-            isOpen: () => !!conn?.open
-          };
-          ether.on('p2p›send', o => { if (conn?.open) conn.send(o); });
-        })();
+        (()=>{ether.on('p2p›state',ok=>{document.getElementById('dot-p2p').className='dot'+(ok?' ok':'');if(ok)R09_P2P.send({type:'HELLO',id:R09_NODE.id,dev:R09_NODE.dev});else{window.R09_PEER=null;document.getElementById('lbl-p2p').textContent='P2P Off';}});ether.on('p2p›send',o=>R09_P2P?.send(o));ether.on('p2p›msg',m=>{if(m.type==='HELLO'){window.R09_PEER=m;document.getElementById('lbl-p2p').textContent=`P2P ↔ ${m.id}`;ether.emit('ui›toast',`🔗 Connecté à ${m.id}`);ether.emit('peer›upd');}if(m.type==='PROMPT'){R09_NODE.remote++;ether.emit('worker›run',m);}if(m.type==='PATCH'){R09_NODE.remote++;ether.emit('theme›patch',{patch:m.patch});ether.emit('proof›show',`🧠 Calculé par ${m.by} (${m.hw} • ${m.stats})`);}if(m.type==='COMMIT'){ether.emit('theme›patch',{patch:m.patch,save:false});ether.emit('proof›show',`✓ Validé par ${m.from}`);}if(m.type==='CHAT_RES'){R09_NODE.remote++;ether.emit('chat›res',m);}});})();
       </script>
     </template>
 
-    <!-- 10. ROUTAGE DES PAQUETS P2P ENTRANTS (< 680 car.) -->
-    <template id="logic_p2p_bus" data-type="logic">
+    <template id="logic_proof" data-type="logic">
       <script>
-        ether.on('p2p›msg', m => {
-          if (m.type === 'ASK') ether.emit('worker›run', { mode: m.mode, text: m.text, remote: true });
-          if (m.type === 'PATCH') {
-            ether.emit('theme›patch', { patch: m.patch });
-            ether.emit('ui›toast', '✨ Thème reçu depuis le nœud GPU distant');
-          }
-          if (m.type === 'COMMIT') {
-            ether.emit('theme›patch', { patch: m.patch, save: false });
-            ether.emit('ui›toast', '✓ Thème validé depuis le terminal distant');
-          }
-          if (m.type === 'STREAM') ether.emit('chat›stream', m);
-        });
+        (()=>{const sh=t=>{const e=document.getElementById('exec-proof');if(e){e.style.display='block';e.textContent=t;}};ether.on('proof›show',sh);ether.on('theme›undo',()=>sh(`⚡ Exécuté en LOCAL par ${R09_NODE.id} (${R09_NODE.dev} • 0 GPU)`));ether.on('chat›res',m=>{const b=document.getElementById('ai-reply');if(b){b.style.display='block';b.innerHTML=`<strong>🧠 ${m.by} (${m.hw} • ${m.stats}) :</strong><br>${m.text.replace(/\n/g,'<br>')}`;}sh(`🧠 Réponse calculée par ${m.by} (${m.hw} • ${m.stats})`);ether.emit('win›open','app_welcome');});})();
       </script>
     </template>
 
-    <!-- 11. DÉMON WEBGPU SUR MAC MINI M2 (< 960 car.) -->
-    <template id="logic_gpu" data-type="logic">
+    <template id="core_webgpu" data-type="logic">
       <script>
-        window.R09_GPU = {
-          eng: null, ready: false,
-          boot: async (modId) => {
-            if (!navigator.gpu) throw new Error('WebGPU non supporté sur ce navigateur (utilise Chrome sur Mac)');
-            ether.emit('gpu›prog', { pct: 5, txt: 'Importation du moteur MLC WebGPU...' });
-            const webllm = await import('https://esm.run/@mlc-ai/web-llm');
-            window.R09_GPU.eng = await webllm.CreateMLCEngine(modId, {
-              initProgressCallback: r => ether.emit('gpu›prog', { pct: Math.round(r.progress * 100), txt: r.text })
-            });
-            window.R09_GPU.ready = true;
-            document.getElementById('dot-ai').className = 'dot ok';
-            document.getElementById('lbl-ai').textContent = 'GPU M2 Actif';
-            ether.emit('diag›log', '[GPU] Modèle chargé en VRAM : ' + modId);
-          }
-        };
+        window.R09_GPU={eng:null,boot:async cb=>{if(window.R09_GPU.eng)return 1;const w=await import('https://esm.run/@mlc-ai/web-llm');window.R09_GPU.eng=await w.CreateMLCEngine('Llama-3.2-3B-Instruct-q4f16_1-MLC',{initProgressCallback:r=>cb?.(r.text)});return 1;},ask:async ms=>{if(window.R09_GPU.eng){const r=await window.R09_GPU.eng.chat.completions.create({messages:ms,temperature:.35,max_tokens:450});return r.choices[0]?.message?.content||'';}const r=await fetch(localStorage.getItem('r09_url')||'http://localhost:11434/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:localStorage.getItem('r09_mod')||'llama3.2',messages:ms})});return(await r.json()).choices?.[0]?.message?.content||'';}};
       </script>
     </template>
 
-    <!-- 12. EXÉCUTION IA DISTRIBUÉE (SYSTÈME 2 : THÈME JSON & STREAMING LIBRE) (< 995 car.) -->
     <template id="logic_worker" data-type="logic">
       <script>
-        (() => {
-          const ask = async ({ mode, text, remote = false }) => {
-            if (!window.R09_GPU?.ready) {
-              const err = '⚠ Aucun nœud GPU actif (charge le modèle sur le Mac Mini M2)';
-              return remote ? ether.emit('p2p›send', { type: 'STREAM', delta: err, done: true }) : ether.emit('ui›toast', err);
-            }
-            document.getElementById('dot-ai').className = 'dot busy';
-            const cur = ram.read('sys_theme_dict').content;
-            const sys = mode === 'THEME'
-              ? `Tu es le moteur CSS de R09.OS. État actuel: ${cur}. Réponds UNIQUEMENT par un JSON valide (zéro texte) modifiant les clés pertinentes parmi "--r09-bg","--r09-fg","--r09-muted","--r09-win-bg","--r09-win-border","--r09-blur","--r09-accent","--r09-accent2","--r09-radius". Aquarelle bleu clair: fond pastel #e0f2fe, texte #0f172a, fenêtres rgba(255,255,255,0.68), accent #0284c7. Glassmorphisme: --r09-win-bg rgba(255,255,255,0.14), --r09-blur 28px, --r09-win-border rgba(255,255,255,0.35).`
-              : `Tu es l'IA souveraine de R09.OS exécutée localement sur GPU. Réponds de façon claire, précise et structurée en français.`;
-            try {
-              const t0 = performance.now(); let out = '', tok = 0;
-              const st = await window.R09_GPU.eng.chat.completions.create({
-                messages: [{ role: 'system', content: sys }, { role: 'user', content: text }],
-                temperature: mode === 'THEME' ? 0.15 : 0.6, stream: true
-              });
-              for await (const c of st) {
-                const d = c.choices?.[0]?.delta?.content || '';
-                if (!d) continue;
-                out += d; tok++;
-                if (mode === 'CHAT') {
-                  const msg = { type: 'STREAM', ask: tok === 1 ? text : '', delta: d, done: false };
-                  remote ? ether.emit('p2p›send', msg) : ether.emit('chat›stream', msg);
-                }
-              }
-              const tps = (tok / ((performance.now() - t0) / 1000)).toFixed(1);
-              if (mode === 'THEME') {
-                const patch = JSON.parse(out.match(/\{[\s\S]*\}/)[0]);
-                remote ? ether.emit('p2p›send', { type: 'PATCH', patch }) : ether.emit('theme›patch', { patch });
-                ether.emit('diag›log', `[GPU] Patch CSS généré à ${tps} tok/s`);
-              } else {
-                const end = { type: 'STREAM', delta: '', done: true, meta: `${tok} tokens • ${tps} tok/s (GPU M2)` };
-                remote ? ether.emit('p2p›send', end) : ether.emit('chat›stream', end);
-              }
-            } catch (e) { ether.emit('diag›log', '[GPU ERR] ' + e.message); }
-            document.getElementById('dot-ai').className = 'dot ok';
-          };
-          ether.on('worker›run', ask);
-          ether.on('ai›ask', p => {
-            if (p.mode === 'CHAT') ether.emit('chat›open', p.text);
-            if (window.R09_P2P?.isOpen() && !window.R09_GPU?.ready) ether.emit('p2p›send', { type: 'ASK', mode: p.mode, text: p.text });
-            else ask(p);
-          });
-        })();
+        (()=>{const run=async({text,mode='THEME'})=>{document.getElementById('dot-ai').className='dot busy';const t0=performance.now();try{const isT=mode==='THEME',sys=isT?ram.read('sys_ai_prompt').content+'\nActuel:'+ram.read('sys_theme_dict').content:'Tu es R09.OS, IA souveraine. Réponds clairement en français.',raw=await R09_GPU.ask([{role:'system',content:sys},{role:'user',content:text}]),sec=((performance.now()-t0)/1000).toFixed(2),tok=Math.max(1,Math.round(raw.length/4)),st=`${(tok/sec).toFixed(1)} tok/s • ${sec}s`,hw=R09_GPU.eng?'WebGPU':'API',me=R09_NODE.id;if(isT){const patch=JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);R09_P2P?.isOpen()?ether.emit('p2p›send',{type:'PATCH',patch,by:me,hw,stats:st}):(ether.emit('theme›patch',{patch}),ether.emit('proof›show',`🧠 ${me} (${hw} • ${st})`));}else{const pl={type:'CHAT_RES',text:raw,by:me,hw,stats:st};R09_P2P?.isOpen()?ether.emit('p2p›send',pl):ether.emit('chat›res',pl);}}catch(e){ether.emit('ui›toast','⚠ '+e.message);}document.getElementById('dot-ai').className='dot ok';};ether.on('worker›run',run);ether.on('ai›ask',q=>R09_P2P?.isOpen()&&!window.R09_IS_WORKER?ether.emit('p2p›send',{type:'PROMPT',text:q.text,mode:q.mode}):run(q));})();
       </script>
     </template>
 
-    <!-- 13. PERSISTANCE QUINE ("1 FILE = 1 TRUTH") (< 650 car.) -->
     <template id="core_quine" data-type="logic">
       <script>
-        ether.on('sys›export', () => {
-          const doc = document.documentElement.cloneNode(true);
-          doc.querySelectorAll('.r09-window, .r09-desktop').forEach(n => n.remove());
-          const db = doc.querySelector('#blueprint-database');
-          db.innerHTML = '';
-          ram.list().forEach(id => {
-            const m = ram.read(id), t = document.createElement('template');
-            t.id = m.id; t.dataset.type = m.type; if (m.name) t.dataset.name = m.name;
-            t.innerHTML = m.content; db.appendChild(t);
-          });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(new Blob(['<!DOCTYPE html>\n' + doc.outerHTML], { type: 'text/html' }));
-          a.download = 'R09.OS_v0.1_validated.html'; a.click();
-          ether.emit('ui›toast', '💾 OS autonome exporté (1 File = 1 Truth)');
-        });
+        ether.on('sys›export',()=>{const d=document.documentElement.cloneNode(true);d.querySelectorAll('.r09-window,.r09-desktop').forEach(n=>n.remove());const db=d.querySelector('#blueprint-database');db.innerHTML='';ram.list().forEach(i=>{const m=ram.read(i),t=document.createElement('template');t.id=m.id;t.dataset.type=m.type;if(m.name)t.dataset.name=m.name;t.innerHTML=m.content;db.appendChild(t);});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<!DOCTYPE html>\n'+d.outerHTML],{type:'text/html'}));a.download='R09.OS_v0.1.html';a.click();ether.emit('ui›toast','💾 Fichier OS autonome exporté');});
       </script>
     </template>
 
-    <!-- 14. APPLICATION : IA & APERÇU VISUEL -->
-    <template id="app_chat" data-type="app" data-name="IA & Aperçu">
+    <template id="app_welcome" data-type="app" data-name="Aperçu OS">
       <div class="card">
         <strong>R09 — Souveraineté Locale, Puissance Mutualisée</strong><br>
-        <span style="color:var(--r09-muted);font-size:12px;">WebOS Vanilla & IA souveraine • Système 1 (JEV) + Système 2 (WebGPU P2P)</span>
+        <span class="muted">WebOS Vanilla & IA souveraine • Briques &lt; 1024 car. • 1 Fichier = 1 Vérité</span>
       </div>
-      <div id="chat-stream-box" class="chat-box">
-        <div class="msg ai">En attente d'instruction. Essaie un changement de thème ou pose une question complexe au nœud GPU distant.</div>
-      </div>
+      <div id="exec-proof" class="card" style="display:none;border-color:var(--r09-accent);font-weight:600;"></div>
+      <div>Modifie l'interface depuis ton téléphone : l'IA du Mac calcule les mutations CSS et le système synchronise les deux écrans en P2P.</div>
+      <div id="ai-reply" class="card" style="display:none;user-select:text;"></div>
       <div class="row">
-        <button class="c-btn" onclick="window.AtomAPI.emit('sys›export')">💾 Exporter mon OS (Quine)</button>
+        <button class="c-btn" onclick="window.AtomAPI.emit('sys›export')">💾 Exporter OS (Quine)</button>
         <button class="c-btn sec" onclick="window.AtomAPI.emit('theme›undo')">↩ Undo Thème</button>
       </div>
     </template>
 
-    <!-- 15. CONTRÔLEUR STREAMING DU CHAT (< 760 car.) -->
-    <template id="logic_chat_ui" data-type="logic">
+    <template id="app_p2p" data-type="app" data-name="Réseau P2P & IA">
+      <div class="card" id="node-info"></div>
+      <div class="card">
+        <strong>1. Cerveau IA (sur le Mac Mini M2)</strong>
+        <div class="row" style="margin-top:8px;">
+          <button id="btn-gpu" class="c-btn">⚡ Démarrer WebGPU + QR Code</button>
+        </div>
+        <div id="gpu-log" class="muted" style="margin-top:6px;">En attente d'activation sur le Mac...</div>
+      </div>
+      <div class="card">
+        <strong>2. Connexion P2P Instantanée (Mac ↔ iPhone)</strong>
+        <div class="row" style="margin-top:8px;">
+          <input id="p2p-room" class="c-inp" style="width:95px;text-align:center;font-weight:bold;font-size:15px;" placeholder="Code 4 chiffres">
+          <button id="btn-host" class="c-btn sec">Afficher QR</button>
+          <button id="btn-join" class="c-btn">Rejoindre</button>
+        </div>
+        <img id="p2p-qr" alt="QR Code P2P" style="display:none;margin-top:10px;border-radius:12px;background:#fff;padding:6px;">
+      </div>
+    </template>
+
+    <template id="logic_qr" data-type="logic">
       <script>
-        (() => {
-          let curAi = null;
-          const add = (cls, txt) => {
-            const box = document.getElementById('chat-stream-box'); if (!box) return null;
-            const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = txt;
-            box.appendChild(d); box.scrollTop = box.scrollHeight; return d;
-          };
-          ether.on('chat›open', q => {
-            ether.emit('win›open', 'app_chat');
-            setTimeout(() => { add('u', q); curAi = add('ai', '⏳ Réflexion sur le nœud GPU...'); }, 30);
-          });
-          ether.on('chat›stream', m => {
-            if (!document.getElementById('w-app_chat')) ether.emit('win›open', 'app_chat');
-            setTimeout(() => {
-              if (m.ask && !curAi) add('u', m.ask);
-              if (!curAi) curAi = add('ai', '');
-              if (curAi.textContent.startsWith('⏳')) curAi.textContent = '';
-              curAi.textContent += m.delta || '';
-              if (m.done) {
-                if (m.meta) curAi.textContent += `\n\n⚡ [${m.meta}]`;
-                curAi = null;
-              }
-              const box = document.getElementById('chat-stream-box');
-              if (box) box.scrollTop = box.scrollHeight;
-            }, 20);
-          });
-        })();
+        (()=>{window.R09_QR=(el,r)=>{const u=location.origin+location.pathname+'?r='+r;el.src='https://api.qrserver.com/v1/create-qr-code/?size=160x160&data='+encodeURIComponent(u);el.style.display='block';R09_P2P.host(r);};const q=new URLSearchParams(location.search).get('r');if(q)setTimeout(()=>{R09_P2P.join(q);ether.emit('ui›toast','🔗 Connexion auto salon #'+q);},200);})();
       </script>
     </template>
 
-    <!-- 16. APPLICATION : RÉSEAU P2P & MOTEUR WEBGPU -->
-    <template id="app_p2p" data-type="app" data-name="Réseau P2P & GPU">
-      <div class="card">
-        <strong>1. Cerveau Neuronal WebGPU (à activer sur le Mac Mini M2)</strong>
-        <div class="row" style="margin-top:8px;">
-          <select id="gpu-model-sel" class="c-sel" style="flex:2;">
-            <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama-3.2-3B-Instruct (Recommandé M2 • ~1.8 Go)</option>
-            <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B-Instruct (Ultra-rapide • ~850 Mo)</option>
-          </select>
-          <button id="btn-boot-gpu" class="c-btn" style="flex:1;">Charger GPU</button>
-        </div>
-        <div class="prog-bg"><div id="gpu-bar" class="prog-fill"></div></div>
-        <div id="gpu-txt" style="font-size:11px;color:var(--r09-muted);margin-top:4px;">En attente d'activation (inutile sur iPhone)</div>
-      </div>
-
-      <div class="card">
-        <strong>2. Connexion Instantanée Mac ↔ iPhone (QR Code)</strong>
-        <div class="row" style="margin-top:8px;">
-          <button id="p2p-host" class="c-btn">📷 Afficher QR Code (Mac)</button>
-          <input id="p2p-pin" class="c-inp" style="width:110px;" placeholder="Code 4 chiffres">
-          <button id="p2p-join" class="c-btn sec">Rejoindre</button>
-        </div>
-        <div id="qr-zone" class="qr-box" style="display:none;">
-          <img id="qr-img" alt="QR Code R09.OS">
-          <div id="qr-lbl" style="font-size:12px;font-weight:700;"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <strong>3. Journal de Diagnostic Temps Réel</strong>
-        <div id="r09-diag" class="diag-log" style="margin-top:6px;">[BOOT] Noyau R09.OS prêt.</div>
-      </div>
-    </template>
-
-    <!-- 17. CONTRÔLEUR UI DU RÉSEAU P2P & DIAGNOSTIC (< 980 car.) -->
     <template id="logic_p2p_ui" data-type="logic">
       <script>
-        (() => {
-          const logs = ['[BOOT] Noyau R09.OS initialisé (Loi Quantum OK)'];
-          ether.on('diag›log', l => {
-            logs.push(l); if (logs.length > 30) logs.shift();
-            const el = document.getElementById('r09-diag');
-            if (el) { el.textContent = logs.join('\n'); el.scrollTop = el.scrollHeight; }
-          });
-          ether.on('gpu›prog', ({ pct, txt }) => {
-            const b = document.getElementById('gpu-bar'), t = document.getElementById('gpu-txt');
-            if (b) b.style.width = pct + '%';
-            if (t) t.textContent = `${pct}% — ${txt}`;
-          });
-          ether.on('app›mount›app_p2p', w => {
-            const bg = w.querySelector('#btn-boot-gpu'), pinInp = w.querySelector('#p2p-pin');
-            const d = document.getElementById('r09-diag'); if (d) d.textContent = logs.join('\n');
-            if (window.R09_GPU?.ready) { bg.textContent = '🟢 GPU Actif'; bg.disabled = true; }
-            bg.onclick = async () => {
-              bg.disabled = true; bg.textContent = 'Chargement...';
-              try { await window.R09_GPU.boot(w.querySelector('#gpu-model-sel').value); bg.textContent = '🟢 GPU Actif'; }
-              catch (e) { bg.disabled = false; bg.textContent = 'Réessayer'; ether.emit('diag›log', '[ERR] ' + e.message); }
-            };
-            w.querySelector('#p2p-host').onclick = async () => {
-              const pin = await window.R09_P2P.host();
-              const url = `${location.origin}${location.pathname}?pin=${pin}`;
-              w.querySelector('#qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-              w.querySelector('#qr-lbl').textContent = `Scanne avec ton iPhone (ou code : ${pin})`;
-              w.querySelector('#qr-zone').style.display = 'flex';
-            };
-            w.querySelector('#p2p-join').onclick = () => window.R09_P2P.join(pinInp.value);
-            const autoPin = new URLSearchParams(location.search).get('pin');
-            if (autoPin) { pinInp.value = autoPin; window.R09_P2P.join(autoPin); }
-          });
-        })();
+        ether.on('app›mount›app_p2p',w=>{const lg=w.querySelector('#gpu-log'),ri=w.querySelector('#p2p-room'),qr=w.querySelector('#p2p-qr'),nd=w.querySelector('#node-info'),la=document.getElementById('lbl-ai'),da=document.getElementById('dot-ai'),q=new URLSearchParams(location.search).get('r');if(q)ri.value=q;const upd=()=>{nd.innerHTML=`<strong>Moi :</strong> ${R09_NODE.id} (${R09_NODE.dev})<br><strong>Pair P2P :</strong> ${window.R09_PEER?`${R09_PEER.id} (${R09_PEER.dev})`:'En attente...'}`;};upd();ether.on('peer›upd',upd);const host=()=>{const r=ri.value.trim()||String(Math.floor(1000+Math.random()*9000));ri.value=r;R09_QR(qr,r);lg.textContent=`Salon #${r} prêt — Scanne le QR code`;};w.querySelector('#btn-gpu').onclick=async()=>{window.R09_IS_WORKER=1;da.className='dot busy';la.textContent='Chargement GPU...';try{await R09_GPU.boot(t=>lg.textContent=t);da.className='dot ok';la.textContent='WebGPU Actif';host();}catch(e){lg.textContent='Erreur: '+e.message;}};w.querySelector('#btn-host').onclick=host;w.querySelector('#btn-join').onclick=()=>{if(ri.value.trim())R09_P2P.join(ri.value.trim());};});
       </script>
     </template>
 
   </div>
 
-  <!-- BOOTLOADER SÉQUENTIEL ZÉRO-EVAL (< 750 car.) -->
   <script id="r09-bootloader">
-    (() => {
-      const db = document.getElementById('blueprint-database');
-      const tpls = Array.from(db.querySelectorAll('template'));
-      const run = code => { const s = document.createElement('script'); s.textContent = code; document.body.appendChild(s); s.remove(); };
-      run(tpls.find(t => t.id === 'core_ether').content.querySelector('script').textContent);
-      run(tpls.find(t => t.id === 'core_ram').content.querySelector('script').textContent);
-      const ether = window.R09_Core.Ether, ram = window.R09_Core.createRAM(ether);
-      window.AtomAPI = Object.freeze({ on: ether.on, off: ether.off, emit: ether.emit, read: ram.read, write: ram.write, list: ram.list });
-      tpls.forEach(t => ram.write(t.id, { id: t.id, type: t.dataset.type, name: t.dataset.name, content: t.innerHTML.trim() }));
-      tpls.filter(t => t.dataset.type === 'logic' && !['core_ether', 'core_ram'].includes(t.id)).forEach(t => {
-        run(`((ether, ram) => {\n${t.content.querySelector('script').textContent}\n})(window.AtomAPI, window.AtomAPI);`);
-      });
-      document.documentElement.dataset.r09State = 'idle';
-      ether.emit('win›open', 'app_chat');
-      ether.emit('win›open', 'app_p2p');
-    })();
+    (()=>{const db=document.getElementById('blueprint-database'),tpls=[...db.querySelectorAll('template')],run=c=>{const s=document.createElement('script');s.textContent=c;document.body.appendChild(s);s.remove();};run(tpls.find(t=>t.id==='core_ether').content.querySelector('script').textContent);run(tpls.find(t=>t.id==='core_ram').content.querySelector('script').textContent);const ether=window.R09_Core.Ether,ram=window.R09_Core.createRAM(ether);window.AtomAPI=Object.freeze({on:ether.on,off:ether.off,emit:ether.emit,read:ram.read,write:ram.write,list:ram.list});tpls.forEach(t=>ram.write(t.id,{id:t.id,type:t.dataset.type,name:t.dataset.name,content:t.innerHTML.trim()}));tpls.filter(t=>t.dataset.type==='logic'&&!['core_ether','core_ram'].includes(t.id)).forEach(t=>run(`((ether,ram)=>{\n${t.content.querySelector('script').textContent}\n})(window.AtomAPI,window.AtomAPI);`));document.documentElement.dataset.r09State='idle';ether.emit('win›open','app_welcome');})();
   </script>
 </body>
 </html>
