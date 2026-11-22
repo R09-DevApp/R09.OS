@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr" data-r09-state="booting">
 <head>
-  <meta charset="UTF-8"> 
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="r09-version" content="0.1.0-github-demo">
   <title>R09 — Souveraineté Locale, Puissance Mutualisée</title>
@@ -246,6 +246,12 @@
       outline: none;
     }
     .c-txt { height: 64px; resize: none; }
+    .qr-box {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 12px; background: #fff; color: #0f172a; border-radius: 14px;
+      margin-top: 8px; text-align: center;
+    }
+    .qr-box img { width: 170px; height: 170px; display: block; border-radius: 8px; }
 
     .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .card {
@@ -484,34 +490,42 @@
       </script>
     </template>
 
-    <!-- 9. PONT WEBRTC DATACHANNEL SANS SERVEUR (< 990 car.) -->
+    <!-- 9. PONT P2P DIRECT PAR QR CODE / CODE SALLE (< 995 car.) -->
     <template id="logic_p2p" data-type="logic">
       <script>
         (() => {
-          let pc = null, dc = null;
-          const cfg = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+          let peer = null, conn = null;
           const setSt = (cls, txt) => {
             document.getElementById('dot-p2p').className = 'dot ' + cls;
             document.getElementById('lbl-p2p').textContent = txt;
           };
           const bind = c => {
-            dc = c;
-            dc.onopen = () => { setSt('ok', 'P2P Connecté'); ether.emit('ui›toast', '🔗 Tunnel WebRTC ouvert'); ether.emit('diag›log', '[P2P] Canal de données actif'); };
-            dc.onclose = () => { setSt('err', 'P2P Fermé'); ether.emit('diag›log', '[P2P] Canal fermé'); };
-            dc.onmessage = e => ether.emit('p2p›msg', JSON.parse(e.data));
+            conn = c;
+            conn.on('open', () => { setSt('ok', 'P2P Connecté'); ether.emit('ui›toast', '🔗 Mac & iPhone connectés !'); ether.emit('diag›log', '[P2P] Tunnel direct ouvert'); });
+            conn.on('close', () => setSt('err', 'P2P Fermé'));
+            conn.on('data', d => ether.emit('p2p›msg', d));
           };
-          const waitIce = () => new Promise(r => {
-            if (pc.iceGatheringState === 'complete') return r();
-            const t = setTimeout(r, 2000);
-            pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); r(); } };
+          const loadPeer = () => window.Peer ? Promise.resolve() : new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+            s.onload = res; s.onerror = rej; document.head.appendChild(s);
           });
           window.R09_P2P = {
-            offer: async () => { pc = new RTCPeerConnection(cfg); bind(pc.createDataChannel('r09')); await pc.setLocalDescription(await pc.createOffer()); await waitIce(); return JSON.stringify(pc.localDescription); },
-            answer: async s => { pc = new RTCPeerConnection(cfg); pc.ondatachannel = e => bind(e.channel); await pc.setRemoteDescription(JSON.parse(s)); await pc.setLocalDescription(await pc.createAnswer()); await waitIce(); return JSON.stringify(pc.localDescription); },
-            accept: async s => { await pc.setRemoteDescription(JSON.parse(s)); },
-            isOpen: () => dc?.readyState === 'open'
+            host: async () => {
+              await loadPeer();
+              const pin = String(Math.floor(1000 + Math.random() * 9000));
+              peer = new Peer('r09-' + pin);
+              peer.on('connection', bind);
+              return new Promise(r => peer.on('open', () => r(pin)));
+            },
+            join: async pin => {
+              await loadPeer();
+              peer = new Peer();
+              peer.on('open', () => bind(peer.connect('r09-' + pin.trim(), { reliable: true })));
+            },
+            isOpen: () => !!conn?.open
           };
-          ether.on('p2p›send', o => { if (dc?.readyState === 'open') dc.send(JSON.stringify(o)); });
+          ether.on('p2p›send', o => { if (conn?.open) conn.send(o); });
         })();
       </script>
     </template>
@@ -691,12 +705,15 @@
       </div>
 
       <div class="card">
-        <strong>2. Appairage WebRTC Direct (Mac ↔ iPhone sans serveur)</strong>
-        <textarea id="p2p-sdp" class="c-txt" style="margin-top:8px;" placeholder="Colle ici le jeton WebRTC échangé entre ton Mac et ton iPhone..."></textarea>
+        <strong>2. Connexion Instantanée Mac ↔ iPhone (QR Code)</strong>
         <div class="row" style="margin-top:8px;">
-          <button id="p2p-offer" class="c-btn">1. Créer Offre (Mac)</button>
-          <button id="p2p-ans" class="c-btn sec">2. Répondre (iPhone)</button>
-          <button id="p2p-acc" class="c-btn sec">3. Valider Réponse (Mac)</button>
+          <button id="p2p-host" class="c-btn">📷 Afficher QR Code (Mac)</button>
+          <input id="p2p-pin" class="c-inp" style="width:110px;" placeholder="Code 4 chiffres">
+          <button id="p2p-join" class="c-btn sec">Rejoindre</button>
+        </div>
+        <div id="qr-zone" class="qr-box" style="display:none;">
+          <img id="qr-img" alt="QR Code R09.OS">
+          <div id="qr-lbl" style="font-size:12px;font-weight:700;"></div>
         </div>
       </div>
 
@@ -706,7 +723,7 @@
       </div>
     </template>
 
-    <!-- 17. CONTRÔLEUR UI DU RÉSEAU P2P & DIAGNOSTIC (< 950 car.) -->
+    <!-- 17. CONTRÔLEUR UI DU RÉSEAU P2P & DIAGNOSTIC (< 980 car.) -->
     <template id="logic_p2p_ui" data-type="logic">
       <script>
         (() => {
@@ -722,7 +739,7 @@
             if (t) t.textContent = `${pct}% — ${txt}`;
           });
           ether.on('app›mount›app_p2p', w => {
-            const sdp = w.querySelector('#p2p-sdp'), bg = w.querySelector('#btn-boot-gpu');
+            const bg = w.querySelector('#btn-boot-gpu'), pinInp = w.querySelector('#p2p-pin');
             const d = document.getElementById('r09-diag'); if (d) d.textContent = logs.join('\n');
             if (window.R09_GPU?.ready) { bg.textContent = '🟢 GPU Actif'; bg.disabled = true; }
             bg.onclick = async () => {
@@ -730,9 +747,16 @@
               try { await window.R09_GPU.boot(w.querySelector('#gpu-model-sel').value); bg.textContent = '🟢 GPU Actif'; }
               catch (e) { bg.disabled = false; bg.textContent = 'Réessayer'; ether.emit('diag›log', '[ERR] ' + e.message); }
             };
-            w.querySelector('#p2p-offer').onclick = async () => { sdp.value = 'Génération ICE...'; sdp.value = await window.R09_P2P.offer(); try { await navigator.clipboard.writeText(sdp.value); } catch (_) {} ether.emit('ui›toast', '📋 Offre prête (copiée dans le presse-papiers)'); };
-            w.querySelector('#p2p-ans').onclick = async () => { sdp.value = await window.R09_P2P.answer(sdp.value.trim()); try { await navigator.clipboard.writeText(sdp.value); } catch (_) {} ether.emit('ui›toast', '📋 Réponse prête (colle-la sur le Mac)'); };
-            w.querySelector('#p2p-acc').onclick = async () => { await window.R09_P2P.accept(sdp.value.trim()); };
+            w.querySelector('#p2p-host').onclick = async () => {
+              const pin = await window.R09_P2P.host();
+              const url = `${location.origin}${location.pathname}?pin=${pin}`;
+              w.querySelector('#qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+              w.querySelector('#qr-lbl').textContent = `Scanne avec ton iPhone (ou code : ${pin})`;
+              w.querySelector('#qr-zone').style.display = 'flex';
+            };
+            w.querySelector('#p2p-join').onclick = () => window.R09_P2P.join(pinInp.value);
+            const autoPin = new URLSearchParams(location.search).get('pin');
+            if (autoPin) { pinInp.value = autoPin; window.R09_P2P.join(autoPin); }
           });
         })();
       </script>
